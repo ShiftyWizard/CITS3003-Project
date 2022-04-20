@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+/lib
+/src
+/vids
+/res/models-textures
+/build
+/cmake-build
+.DS_Store
