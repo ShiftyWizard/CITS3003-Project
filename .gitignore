@@ -32,7 +32,6 @@
 *.app
 
 /lib
-/src
 /vids
 /res/models-textures
 /build
