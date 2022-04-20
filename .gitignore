@@ -39,3 +39,4 @@
 .DS_Store
 start_scene
 assimp_log.txt
+CMakeLists.txt
