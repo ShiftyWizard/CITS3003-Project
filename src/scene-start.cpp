@@ -364,7 +364,7 @@ void drawMesh(SceneObject sceneObj) {
     glUniform1i(glGetUniformLocation(shaderProgram, "texture"), 0);
 
     // Set the texture scale for the shaders
-    glUniform1f(glGetUniformLocation(shaderProgram, "texScale"), sceneObj.texScale);
+    glUniform1f(glGetUniformLocation(shaderProgram, "texScale"), sceneObj.texScale); 
 
     // Set the projection matrix for the shaders
     glUniformMatrix4fv(projectionU, 1, GL_TRUE, projection);
@@ -372,7 +372,7 @@ void drawMesh(SceneObject sceneObj) {
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
 
-    mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
+    mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale) * RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]); //TASK B
 
 
     // Set the model-view matrix for the shaders
@@ -468,6 +468,16 @@ static void adjustBlueBrightness(vec2 bl_br) {
     sceneObjs[toolObj].brightness += bl_br[1];
 }
 
+static void adjustAmbientDiffuse(vec2 am_di) { //TASK C
+    sceneObjs[toolObj].ambient += am_di[0];
+    sceneObjs[toolObj].diffuse += am_di[1];
+}
+
+static void adjustSpecularShine(vec2 sp_sh) { //TASK C
+    sceneObjs[toolObj].specular += sp_sh[0];
+    sceneObjs[toolObj].shine += sp_sh[1];
+}
+
 static void lightMenu(int id) {
     deactivateTool();
     if (id == 70) {
@@ -506,13 +516,18 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
     return menuId;
 }
 
-static void materialMenu(int id) {
+static void materialMenu(int id) { 
     deactivateTool();
     if (currObject < 0) return;
     if (id == 10) {
         toolObj = currObject;
         setToolCallbacks(adjustRedGreen, mat2(1, 0, 0, 1),
                          adjustBlueBrightness, mat2(1, 0, 0, 1));
+    }
+    if (id == 20) { //TASK C
+        toolObj = currObject;
+        setToolCallbacks(adjustAmbientDiffuse, mat2(1, 0, 0, 1), 
+                        adjustSpecularShine, mat2(1, 0, 0, 5));
     }
         // You'll need to fill in the remaining menu items here.
     else {
@@ -522,11 +537,11 @@ static void materialMenu(int id) {
 
 static void adjustAngleYX(vec2 angle_yx) {
     sceneObjs[currObject].angles[1] += angle_yx[0];
-    sceneObjs[currObject].angles[0] += angle_yx[1];
+    sceneObjs[currObject].angles[0] -= angle_yx[1]; //TASK B
 }
 
-static void adjustAngleZTexscale(vec2 az_ts) {
-    sceneObjs[currObject].angles[2] += az_ts[0];
+static void adjustAngleZTexscale(vec2 az_ts) { 
+    sceneObjs[currObject].angles[2] -= az_ts[0];//TASK B
     sceneObjs[currObject].texScale += az_ts[1];
 }
 
@@ -551,7 +566,7 @@ static void makeMenu() {
 
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All", 10);
-    glutAddMenuEntry("UNIMPLEMENTED: Ambient/Diffuse/Specular/Shine", 20);
+    glutAddMenuEntry("Ambient/Diffuse/Specular/Shine", 20); //TASK C
 
     int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
     int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
@@ -636,11 +651,25 @@ void reshape(int width, int height) {
     //         that the same part of the scene is visible across the width of
     //         the window.
 
-    GLfloat nearDist = 0.2;
-    projection = Frustum(-nearDist * (float) width / (float) height,
-                         nearDist * (float) width / (float) height,
-                         -nearDist, nearDist,
-                         nearDist, 100.0);
+    GLfloat nearDist = 0.01; //TASK D
+
+    if (width >= height) { //TASK E
+        projection = Frustum(
+                            -nearDist * (float) width / (float) height, 
+                            nearDist * (float) width / (float) height,
+                            -nearDist, 
+                            nearDist, 
+                            nearDist, 100.0
+                            );
+    } else {
+        projection = Frustum(
+                            -nearDist, 
+                            nearDist,
+                            -nearDist * (float) height / (float) width, 
+                            nearDist * (float) height / (float) width, 
+                            nearDist, 100.0
+                            );
+    }
 }
 
 //----------------------------------------------------------------------------
