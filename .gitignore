@@ -31,6 +31,8 @@
 *.out
 *.app
 
+.vscode/
+
 /lib
 /vids
 /res/models-textures
