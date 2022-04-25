@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(start_scene)
+add_definitions(-w)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -38,6 +39,8 @@ add_executable(start_scene src/scene-start.cpp src/gnatidread.h src/gnatidread2.
 if (MSVC)
 	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT start_scene)
 	set_property(TARGET start_scene PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+else()
+        target_compile_options(assimp PRIVATE -Wno-ordered-compare-function-pointers)
 endif(MSVC)
 
 if (APPLE)
