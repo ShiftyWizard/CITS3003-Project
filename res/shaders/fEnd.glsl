@@ -1,9 +1,7 @@
-attribute vec3 vPosition;
-attribute vec3 vNormal;
-attribute vec2 vTexCoord;
-
-varying vec2 texCoord;
 varying vec4 color;
+varying vec2 texCoord;  // The third coordinate is always 0.0 and is discarded
+
+uniform sampler2D texture;
 
 uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct;
 uniform mat4 ModelView;
@@ -11,16 +9,11 @@ uniform mat4 Projection;
 uniform vec4 LightPosition;
 uniform float Shininess;
 
-float falloff; //Task F
+uniform vec3 pos;
+varying vec3 Normal;
 
-void main()
+void main() //Task G
 {
-    vec4 vpos = vec4(vPosition, 1.0);
-
-    // Transform vertex position into eye coordinates
-    vec3 pos = (ModelView * vpos).xyz;
-
-
     // The vector to the light from the vertex    
     vec3 Lvec = LightPosition.xyz - pos;
 
@@ -31,7 +24,7 @@ void main()
 
     // Transform vertex normal into eye coordinates (assumes scaling
     // is uniform across dimensions)
-    vec3 N = normalize( (ModelView*vec4(vNormal, 0.0)).xyz );
+    vec3 N = normalize( (ModelView*vec4(Normal, 0.0)).xyz );
 
     // Compute terms in the illumination equation
     vec3 ambient = AmbientProduct;
@@ -48,10 +41,11 @@ void main()
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    float falloff = max(pow(pow(length(Lvec), 2.0), -1.0), 0.0); //Task F
-    color.rgb = (globalAmbient + ambient + diffuse + specular) * falloff; //Task F
-    color.a = 1.0;
+    // float falloff = max(pow(pow(length(Lvec), 2.0), -1.0), 0.0); //Task F
+    float falloff = 1.0;
+    vec4 lightColor;
+    lightColor.rgb = (globalAmbient + ambient + diffuse + specular) * falloff; //Task F
+    lightColor.a = 1.0;
 
-    gl_Position = Projection * ModelView * vpos;
-    texCoord = vTexCoord;
+    gl_FragColor = lightColor * texture2D( texture, texCoord * 2.0 );
 }
