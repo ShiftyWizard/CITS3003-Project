@@ -191,6 +191,12 @@ void zoomOut() {
     viewDist = (viewDist < 0.0 ? viewDist : viewDist * 1.25) + 0.05;
 }
 
+void select(int offset) { //TASK J
+    toolObj += offset;
+    if (toolObj < 3){ toolObj = nObjects;}
+    if (toolObj > nObjects){ toolObj = 3;}
+}
+
 static void mouseClickOrScroll(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
         if (glutGetModifiers() != GLUT_ACTIVE_SHIFT) activateTool(button);
@@ -311,7 +317,7 @@ void init(void) {
 
     // Load shaders and use the resulting shader program
     //shaderProgram = InitShader("res/shaders/vStart.glsl", "res/shaders/fStart.glsl");
-    shaderProgram = InitShader("res/shaders/vEnd.glsl", "res/shaders/fEnd.glsl");
+    shaderProgram = InitShader("res/shaders/vEnd.glsl", "res/shaders/fEnd.glsl"); //TASK G
 
     glUseProgram(shaderProgram);
     CheckError();
@@ -440,6 +446,10 @@ void display(void) {
         glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb);
         glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb);
         glUniform1f(glGetUniformLocation(shaderProgram, "Shininess"), so.shine);
+        CheckError();
+
+        //TASK J
+        glUniform1i(glGetUniformLocation(shaderProgram, "selectedObject"), i == toolObj ? 1 : 0);
         CheckError();
 
         drawMesh(sceneObjs[i]);
@@ -636,6 +646,19 @@ void keyboard(unsigned char key, int x, int y) {
             }
             break;
         }
+        case 'd': { //TASK J
+            sceneObjs[toolObj] = sceneObjs[NULL];
+            toolObj++;
+            nObjects--;
+            //ARRAY ISNT PROPERLY INDEXED IF ANY OBJECT EARLIER THAN nOBJECTS IS DELETED
+            break;
+        }
+        case 'c': { //TASK J
+            addObject(sceneObjs[toolObj].meshId);
+            select(toolObj);
+            //NEED TO CHANGE LOCATION FOR 3RD DUPLICATION
+            break;
+        }
     }
 }
 
@@ -651,6 +674,14 @@ void specialKeys(int key, int x, int y) {
             if (glutGetModifiers() == GLUT_ACTIVE_ALT) { // down + alt
                 zoomOut();
             }
+            break;
+        }
+        case GLUT_KEY_LEFT: {
+            select(-1);
+            break;
+        }
+        case GLUT_KEY_RIGHT: {
+            select(1);
             break;
         }
     }

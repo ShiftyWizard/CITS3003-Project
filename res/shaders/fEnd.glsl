@@ -7,6 +7,7 @@ uniform mat4 ModelView;
 uniform mat4 Projection;
 uniform vec4 LightPosition;
 uniform vec4 SunLightPosition;
+uniform int selectedObject; 
 
 uniform float Shininess;
 
@@ -72,5 +73,5 @@ void main() //Task G
 
     vec4 mixColor = vec4(lightingColor, 1.0) * texture2D(texture, texCoord * texScale);
 
-    gl_FragColor = mix(mixColor, vec4(0.0, 0.0, 0.0, 1.0), length(specular*falloff) + length(sunSpecular*sunStrength)) + (vec4(specular, 0.0)*falloff) + (vec4(sunSpecular, 0.0)*sunStrength);
+    gl_FragColor = mix(mix(mixColor, vec4(0.0, 0.0, 0.0, 1.0), length(specular*falloff) + length(sunSpecular*sunStrength)) + (vec4(specular, 0.0)*falloff) + (vec4(sunSpecular, 0.0)*sunStrength), vec4(0.0, 0.5, 1.0, 1.0), float(selectedObject)/0.5);
 }
