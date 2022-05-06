@@ -42,3 +42,4 @@
 start_scene
 assimp_log.txt
 CMakeLists.txt
+~*.docx
