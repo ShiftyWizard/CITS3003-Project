@@ -364,7 +364,7 @@ void init(void) {
 
     addObject(34); // TASK J
     sceneObjs[3].loc = vec4(0.0, 1.4, 1.0, 1.0);
-    sceneObjs[3].scale = 0.01;
+    sceneObjs[3].scale = 0.003;
     sceneObjs[3].texId = 0; 
     sceneObjs[3].brightness = 0.2; 
 
@@ -443,7 +443,7 @@ void display(void) {
     //TASK J
     SceneObject lightObj3 = sceneObjs[3];
     vec4 SpotlightPosition = view * lightObj3.loc;
-    vec3 SpotlightDirection = vec3(sceneObjs[3].angles[0],sceneObjs[3].angles[1],sceneObjs[3].angles[2]);
+    vec3 SpotlightDirection = vec3(lightObj3.angles[0],lightObj3.angles[1],lightObj3.angles[2]);
 
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
@@ -457,14 +457,11 @@ void display(void) {
     //TASK J
     glUniform4fv(glGetUniformLocation(shaderProgram, "SpotlightPosition"),
                  1, SpotlightPosition);
-    CheckError();
-
-    //TASK J
-    glUniform4fv(glGetUniformLocation(shaderProgram, "SpotlightPosition"),
+    glUniform3fv(glGetUniformLocation(shaderProgram, "SpotlightDirection"),
                  1, SpotlightDirection);
     CheckError();
 
-    //TASK I
+    //TASK I / TASK J 
     for (int i = 0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
@@ -569,6 +566,10 @@ static void lightMenu(int id) {
         currObject = 3;
         setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400),
                         adjustAngleYX, mat2(400, 0, 0, -400));
+    } else if (id ==92){
+        toolObj = 3;
+        setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
+                        adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     } else {
         printf("Error in lightMenu\n");
         exit(1);
@@ -654,6 +655,7 @@ static void makeMenu() {
     glutAddMenuEntry("R/G/B/All Light 2", 81);
     glutAddMenuEntry("Move Spotlight", 90); //TASK J
     glutAddMenuEntry("Change Spotlight Direction", 91);
+    glutAddMenuEntry("R/G/B/ALL Spotlight", 92);
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera", 50);
