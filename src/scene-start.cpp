@@ -1,3 +1,6 @@
+// Adrian Bedford 229373676
+// Oliver Lynch 22989775
+
 
 #include "Angel.h"
 
@@ -191,10 +194,10 @@ void zoomOut() {
     viewDist = (viewDist < 0.0 ? viewDist : viewDist * 1.25) + 0.05;
 }
 
-void select(int offset) { //TASK J
+void selectObj(int offset) { //TASK J
     toolObj += offset;
-    if (toolObj < 3){ toolObj = nObjects;}
-    if (toolObj > nObjects){ toolObj = 3;}
+    if (toolObj < 4){ toolObj = nObjects - 1;}
+    if (toolObj > nObjects - 1){ toolObj = 4;}
 }
 
 static void mouseClickOrScroll(int button, int state, int x, int y) {
@@ -248,6 +251,11 @@ static void adjustScaleY(vec2 sy) {
     sceneObjs[toolObj].loc[1] += sy[1];
 }
 
+//TASK J, MOVED THIS HERE TO CALL IN TOOLLCALLBACKS
+static void adjustAngleYX(vec2 angle_yx) {
+    sceneObjs[currObject].angles[1] += angle_yx[0];
+    sceneObjs[currObject].angles[0] -= angle_yx[1]; //TASK B
+}
 
 //----------------------------------------------------------------------------
 //------Set the mouse buttons to rotate the camera----------------------------
@@ -343,16 +351,22 @@ void init(void) {
 
     addObject(55); // Sphere for the first light
     sceneObjs[1].loc = vec4(2.0, 1.0, 1.0, 1.0);
-    sceneObjs[1].scale = 0.1;
+    sceneObjs[1].scale = 0.05;
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     //TASK I
     addObject(55); 
-    sceneObjs[2].loc = vec4(2.0,0.5,1.0,1.0);
-    sceneObjs[2].scale = 0.05;
+    sceneObjs[2].loc = vec4(2.0,1.2,1.0,1.0);
+    sceneObjs[2].scale = 0.1;
     sceneObjs[2].texId = 0;
     sceneObjs[2].brightness = 0.2;
+
+    addObject(34); // TASK J
+    sceneObjs[3].loc = vec4(0.0, 1.4, 1.0, 1.0);
+    sceneObjs[3].scale = 0.01;
+    sceneObjs[3].texId = 0; 
+    sceneObjs[3].brightness = 0.2; 
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -387,7 +401,6 @@ void drawMesh(SceneObject sceneObj) {
     // in the sceneObj structure (see near the top of the program).
 
     mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale) * RotateX(sceneObj.angles[0]) * RotateY(sceneObj.angles[1]) * RotateZ(sceneObj.angles[2]); //TASK B
-
 
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv(modelViewU, 1, GL_TRUE, view * model);
@@ -427,24 +440,48 @@ void display(void) {
     SceneObject lightObj2 = sceneObjs[2];
     vec4 SunLightPosition = view * lightObj2.loc;
 
+    //TASK J
+    SceneObject lightObj3 = sceneObjs[3];
+    vec4 SpotlightPosition = view * lightObj3.loc;
+    vec3 SpotlightDirection = vec3(sceneObjs[3].angles[0],sceneObjs[3].angles[1],sceneObjs[3].angles[2]);
+
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
     CheckError();
 
     //TASK I
     glUniform4fv(glGetUniformLocation(shaderProgram, "SunLightPosition"),
-                 1, lightPosition);
+                 1, SunLightPosition);
+    CheckError();
+
+    //TASK J
+    glUniform4fv(glGetUniformLocation(shaderProgram, "SpotlightPosition"),
+                 1, SpotlightPosition);
+    CheckError();
+
+    //TASK J
+    glUniform4fv(glGetUniformLocation(shaderProgram, "SpotlightPosition"),
+                 1, SpotlightDirection);
     CheckError();
 
     //TASK I
     for (int i = 0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
-        vec3 rgb = so.rgb * (lightObj1.rgb * so.brightness * lightObj1.brightness) + (lightObj2.rgb * so.brightness * lightObj2.brightness) * 2.0;
+        vec3 rgb =     so.rgb * (lightObj1.rgb * so.brightness * lightObj1.brightness) * 2.0;
+        vec3 sunRgb =  so.rgb * (lightObj2.rgb * so.brightness * lightObj2.brightness) * 2.0;
+        vec3 spotRgb = so.rgb * (lightObj3.rgb * so.brightness * lightObj3.brightness) * 2.0;
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "sunAmbientProduct"), 1, so.ambient * sunRgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "spotAmbientProduct"), 1, so.ambient * spotRgb);
         CheckError();
         glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "sunDiffuseProduct"), 1, so.diffuse * sunRgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "spotDiffuseProduct"), 1, so.diffuse * spotRgb);
+        CheckError();
         glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "sunSpecularProduct"), 1, so.specular * sunRgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "spotSpecularProduct"), 1, so.specular * spotRgb);
         glUniform1f(glGetUniformLocation(shaderProgram, "Shininess"), so.shine);
         CheckError();
 
@@ -524,6 +561,14 @@ static void lightMenu(int id) {
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                         adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
+    } else if (id == 90) { //TASK J
+        toolObj = 3;
+        setToolCallbacks(adjustLocXZ, camRotZ(),
+                        adjustBrightnessY, mat2(1.0, 0.0, 0.0, 10.0));
+    } else if (id == 91) { 
+        currObject = 3;
+        setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400),
+                        adjustAngleYX, mat2(400, 0, 0, -400));
     } else {
         printf("Error in lightMenu\n");
         exit(1);
@@ -571,11 +616,6 @@ static void materialMenu(int id) {
     }
 }
 
-static void adjustAngleYX(vec2 angle_yx) {
-    sceneObjs[currObject].angles[1] += angle_yx[0];
-    sceneObjs[currObject].angles[0] -= angle_yx[1]; //TASK B
-}
-
 static void adjustAngleZTexscale(vec2 az_ts) { 
     sceneObjs[currObject].angles[2] -= az_ts[0];//TASK B
     sceneObjs[currObject].texScale += az_ts[1];
@@ -590,7 +630,7 @@ static void mainmenu(int id) {
     }
     if (id == 50)
         doRotate();
-    if (id == 55 && currObject >= 0) {
+    if (id == 11 && currObject >= 0) {
         setToolCallbacks(adjustAngleYX, mat2(400, 0, 0, -400),
                          adjustAngleZTexscale, mat2(400, 0, 0, 15));
     }
@@ -610,8 +650,10 @@ static void makeMenu() {
     int lightMenuId = glutCreateMenu(lightMenu);
     glutAddMenuEntry("Move Light 1", 70);
     glutAddMenuEntry("R/G/B/All Light 1", 71);
-    glutAddMenuEntry("Move Light 2", 80);
+    glutAddMenuEntry("Move Light 2", 80); //TASK I
     glutAddMenuEntry("R/G/B/All Light 2", 81);
+    glutAddMenuEntry("Move Spotlight", 90); //TASK J
+    glutAddMenuEntry("Change Spotlight Direction", 91);
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera", 50);
@@ -647,16 +689,19 @@ void keyboard(unsigned char key, int x, int y) {
             break;
         }
         case 'd': { //TASK J
-            sceneObjs[toolObj] = sceneObjs[NULL];
-            toolObj++;
+            // sceneObjs[toolObj] = sceneObjs[NULL];
+            for (int i = toolObj; i < maxObjects - 1; i++) {
+                sceneObjs[i] = sceneObjs[i+1];
+            }
+            currObject--;
             nObjects--;
-            //ARRAY ISNT PROPERLY INDEXED IF ANY OBJECT EARLIER THAN nOBJECTS IS DELETED
             break;
         }
         case 'c': { //TASK J
             addObject(sceneObjs[toolObj].meshId);
-            select(toolObj);
-            //NEED TO CHANGE LOCATION FOR 3RD DUPLICATION
+            selectObj(toolObj);
+            currObject++;
+            toolObj++;
             break;
         }
     }
@@ -677,11 +722,11 @@ void specialKeys(int key, int x, int y) {
             break;
         }
         case GLUT_KEY_LEFT: {
-            select(-1);
+            selectObj(-1);
             break;
         }
         case GLUT_KEY_RIGHT: {
-            select(1);
+            selectObj(1);
             break;
         }
     }

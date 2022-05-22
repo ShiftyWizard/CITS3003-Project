@@ -1,3 +1,6 @@
+// Adrian Bedford 229373676
+// Oliver Lynch 22989775
+
 attribute vec3 vPosition;
 attribute vec3 vNormal;
 attribute vec2 vTexCoord;
