@@ -15,7 +15,7 @@ uniform vec4 SunLightPosition;
 uniform vec4 SpotlightPosition;
 uniform vec3 SpotlightDirection;
 uniform int  selectedObject; 
-varying vec3 fragPos;
+uniform float frameNumber;
 
 
 uniform float Shininess;
@@ -94,40 +94,34 @@ void main() //Task G
     // *************************************
     // Calculate spotlight lighting
     // *************************************
-    Lvec = SpotlightPosition.xyz - vpos.xyz;// - vpos.xyz;
-    float theta = dot(normalize(Lvec), normalize(-SpotlightDirection));
+    Lvec = SpotlightPosition.xyz - pos;
+    float theta = dot(normalize(Lvec), normalize(SpotlightDirection));
 
-    if (theta > 0.3) {
+    if (theta > 0.9) {
+        L = normalize( Lvec );   // Direction to the light source
+        E = normalize( -pos );   // Direction to the eye/camera
+        H = normalize( L + E );  // Halfway vector
 
-        // L = normalize( Lvec );   // Direction to the light source
-        // E = normalize( -pos );   // Direction to the eye/camera
-        // H = normalize( L + E );  // Halfway vector
+        ambient = spotAmbientProduct; // Compute terms in the illumination equation
 
-        // ambient = AmbientProduct; // Compute terms in the illumination equation
+        Kd = max( dot(L, N), 0.0 );
+        diffuse = Kd*spotDiffuseProduct;
 
-        // Kd = max( dot(L, N), 0.0 );
-        // diffuse = Kd*DiffuseProduct;
-
-        // Ks = pow( max(dot(N, H), 0.0), Shininess );
-        // specular = Ks * SpecularProduct;
+        Ks = pow( max(dot(N, H), 0.0), Shininess );
+        specular = Ks * spotSpecularProduct;
         
-        // if (dot(L, N) < 0.0 ) {
-        // specular = vec3(0.0, 0.0, 0.0);
-        // } 
+        if (dot(L, N) < 0.0 ) {
+        specular = vec3(0.0, 0.0, 0.0);
+        } 
 
-        // mixAmbient  += ambient;
-        // mixDiffuse  += diffuse;
-        // mixSpecular += specular;
-
-        // gl_FragColor = vec4(0.0,1.0,0.0,1.0);
-
+        mixAmbient  += ambient;
+        mixDiffuse  += diffuse;
+        mixSpecular += specular;
     }
 
-    mixAmbient += vec3(0.0,0.0,1.0) * float(selectedObject); // Selected object glow
+    mixAmbient += vec3(0.0,0.0,1.0) * float(selectedObject) * (sin(frameNumber/10.0)+1.0); // Selected object glow
 
     float sL = (mixSpecular.x + mixSpecular.y + mixSpecular.z)/3.0;
 
-    gl_FragColor = vec4(mixAmbient, 1.0) + vec4(mixDiffuse, 1.0) + vec4(sL,sL,sL,1.0);
-
-    gl_FragColor = vec4(theta, theta, theta, 1.0);
+    gl_FragColor = texture2D( texture, texCoord * texScale ) * (vec4(mixAmbient, 1.0) + vec4(mixDiffuse, 1.0) + vec4(sL,sL,sL,1.0));
 }

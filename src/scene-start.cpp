@@ -81,6 +81,7 @@ SceneObject sceneObjs[maxObjects]; // An array storing the objects currently in 
 int nObjects = 0;    // How many objects are currenly in the scene.
 int currObject = -1; // The current object
 int toolObj = -1;    // The object currently being modified
+float fr = 0.0;
 
 //----------------------------------------------------------------------------
 //
@@ -459,6 +460,10 @@ void display(void) {
                  1, SpotlightPosition);
     glUniform3fv(glGetUniformLocation(shaderProgram, "SpotlightDirection"),
                  1, SpotlightDirection);
+    CheckError();
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "frameNumber"),
+                 fr++);
     CheckError();
 
     //TASK I 
