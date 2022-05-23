@@ -461,7 +461,7 @@ void display(void) {
                  1, SpotlightDirection);
     CheckError();
 
-    //TASK I / TASK J 
+    //TASK I 
     for (int i = 0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
