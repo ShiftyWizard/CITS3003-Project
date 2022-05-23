@@ -94,7 +94,7 @@ void main() //Task G
     // *************************************
     // Calculate spotlight lighting
     // *************************************
-    Lvec = SpotlightPosition.xyz - pos.xyz;// - vpos.xyz;
+    Lvec = SpotlightPosition.xyz - vpos.xyz;// - vpos.xyz;
     float theta = dot(normalize(Lvec), normalize(-SpotlightDirection));
 
     if (theta > 0.3) {
